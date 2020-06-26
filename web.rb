@@ -204,7 +204,7 @@ post '/filequery' do
 	ctrl = D3VController.new(request.cookies['d3vsid'], request.cookies['d3vpep'], 
 							 request.cookies['d3vmep'], request.cookies['d3vaep'], request.cookies['d3vuid'])
 
-	res = ctrl.fileQuery(params[:q], params[:type], true)
+	res = ctrl.fileQuery(params[:q], params[:type], params[:isTooling], true)
 	
 	if res == 'retry'
 		resp = refresh(request, response, false)
