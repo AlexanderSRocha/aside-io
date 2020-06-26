@@ -213,7 +213,7 @@ post '/filequery' do
 								 request.cookies['d3vmep'], request.cookies['d3vaep'], request.cookies['d3vuid'])		
 								 
 		
-		return ctrl.fileQuery(params[:q], params[:type], false)
+		return ctrl.fileQuery(params[:q], params[:type], params[:isTooling], false)
 	else
 		return res
 	end	

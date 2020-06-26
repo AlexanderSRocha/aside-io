@@ -2164,9 +2164,16 @@ class D3VController
 	# type -  Markup | Body
 	# retryAllowed - will enable the fail - refresh token - retry flow
 	# returns unescaped and base 64 encoded file
-	def fileQuery(fQuery, type, retryAllowed)
+	def fileQuery(fQuery, type, isTooling, retryAllowed)
 		begin
-			qr = query(fQuery)
+			puts "Tooling TYPE"
+			puts isTooling
+			if isTooling != "true"
+				qr = query(fQuery)
+				puts "Tooling False"
+			else
+				qr = queryTooling(fQuery)
+				puts "Tooling True"
 			
 			if qr == nil
 				return 'relogin'

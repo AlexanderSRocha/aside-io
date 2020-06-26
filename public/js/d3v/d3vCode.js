@@ -5878,6 +5878,7 @@ var d3vCode = {
 		var namespace;
 		var filename = currentFile.split('.')[0];
 		var fileQuery;
+		var isTooling = false;
 		
 		if(ext === LIGHTNING_EXT) {
 			if(currentFileNamespace) {
@@ -5900,7 +5901,8 @@ var d3vCode = {
 			fileQuery = "SELECT Source, LightningComponentBundleId, LightningComponentBundle.DeveloperName, " +
 			            "LastModifiedBy.Name, LastModifiedDate, LastModifiedById, Id, LightningComponentBundle.ApiVersion " +
 			            "FROM LightningComponentResource WHERE LightningComponentBundle.DeveloperName = '" + filename + 
-			            "' AND FilePath = '" + fromType + "'" + namespaceClause;				
+			            "' AND FilePath = '" + fromType + "'" + namespaceClause;		
+			isTooling = true;		
 		} else {
 			if(currentFileNamespace) {
 				namespaceClause = " AND NamespacePrefix = '" + currentFileNamespace + "'";
@@ -5916,7 +5918,7 @@ var d3vCode = {
 		
 	    ServerAction.fileQuery(fileQuery, bodyField, function(callbackData) {
 	    	callback(callbackData);
-	    });
+	    }, isTooling);
 	},
 	
 	/**

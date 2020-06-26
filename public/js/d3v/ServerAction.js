@@ -67,8 +67,8 @@ var ServerAction = {
 	 * @param		type		- Body|Markup
 	 * @param		callback	- in the form of function(result)
 	 **/			
-	fileQuery : function(queryString, type, callback) {
-		ServerAction.post('/filequery?q=' + encodeURIComponent(queryString) + '&type=' + type, callback);
+	fileQuery : function(queryString, type, callback, isTooling) {
+		ServerAction.post('/filequery?q=' + encodeURIComponent(queryString) + '&type=' + type + '&isTooling=' + isTooling, callback);
 	},
 	
 	/**
