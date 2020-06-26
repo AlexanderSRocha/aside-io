@@ -5362,7 +5362,8 @@ var d3vCode = {
 		
 		return {
 			extension : extSplit[0],
-			type : extSplit[1]
+			type : extSplit[1],
+			filePath : "lwc/"+extSplit[0]+"/"+extSplit[0]+"."+((extSplit[1] === "xml") ? "js-meta." : "")+extSplit[1]
 		};
 	},
 	
@@ -5559,7 +5560,7 @@ var d3vCode = {
 	        d3vCode.setLightningFooter(fromType, false);
 	    } else if(ext == "lwc") {
 	    	select   = 'Source';
-			fromType = lwcInfo.type;
+			fromType = lwcInfo.filePath;
 	        d3vCode.setAuraHighlight(fromType);
 	        d3vCode.setLightningFooter(fromType, false);
 	    } else {
