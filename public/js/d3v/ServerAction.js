@@ -256,6 +256,35 @@ var ServerAction = {
 	},		
 
 	/**
+	 * @description updates a lwc file
+	 * @param		source   - lwc code
+	 * @param		id       - id of LightningComponentResource to update
+	 * @param		callback - in the form of function(result)
+	 **/		
+	updateLwc : function(source, id, callback) {
+		ServerAction.post('/updateLwc?id=' + encodeURIComponent(id), 
+			btoa(d3vUtil.encodeUtf8(source)), 
+			callback);
+	},	
+	
+	/**
+	 * @description creates a lwc file
+	 * @param		source   - lwc code
+	 * @param       defType  - FilePath
+	 * @param       auraBundleName - Name of parent LightningComponentBundle.  Only required for new bundles
+	 * @param       sourceFormat - XML|JS|CSS
+	 * @param		callback - in the form of function(result)
+	 **/		
+	createLwc : function(source, defType, auraBundleName, sourceFormat, callback) {
+		lastPushCode = d3vUtil.getRandomString();
+		
+		ServerAction.post('/createLwc?dt=' + encodeURIComponent(defType) + 
+			'&n=' + encodeURIComponent(auraBundleName) + '&f=' + encodeURIComponent(sourceFormat), 
+			btoa(d3vUtil.encodeUtf8(source)), 
+			callback);
+	},	
+
+	/**
 	 * @description creates a static resource
 	 * @param		name     - name of new resource
 	 * @param		type     - mime type of new resource

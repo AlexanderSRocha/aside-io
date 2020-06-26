@@ -3116,6 +3116,52 @@ var d3vCode = {
 	},
 
 	/**
+	 * @description Cleans up the state of the IDE post lwc save
+	 * @param       editorContents - LightningComponentResource Source
+	 * @param       filePath       - LightningComponentResource FilePath
+	 * @param       isNew          - true if this was a new file, false if its an update
+	 * @param       saveResult     - result of the upsert operation
+	 **/
+	finishLwcSave : function(editorContents, defType, isNew, saveResult) {
+		saveResult = eval('(' + saveResult + ')');
+		
+		var record = saveResult[1];
+		record     = record[0] || record;
+		
+		saveResult = saveResult[0];
+		saveResult = saveResult.length ? saveResult[0] : saveResult;		
+		saveResult = isNew ? saveResult.createResponse : saveResult.updateResponse;
+		editor.getSession().setAnnotations([]); //remove any marked compiler errors
+		
+	    if(saveResult.result.success) {
+	        d3vUtil.alert("saved successfully", { scheme : 'positive'});
+	        lastFile = editorContents;
+	        d3vPopups.closeErrorPopups(CODE_SECTION);
+	        
+	        if(isNew) {
+	        	currentBundleId = record.AuraDefinitionBundleId || null;
+	        	d3vCode.handleNewFile(record, '.aura-' + defType.toLowerCase());
+	        	d3vCode.addLightningResourceToBundleAutocomplete();
+	        	d3vCode.setLightningFooter(defType.toUpperCase(), false);
+	        }
+	        
+	        d3vArchive.write(TABLE_CODE_HISTORY, d3vCode.getCompleteFilename(), editorContents);
+	        d3vCode.setSaveKey(record);
+	        d3vUtil.resetEditorChange();
+	        d3vCode.finishSave();
+	    } else {
+	    	if($.isArray(saveResult.result.errors) && saveResult.result.errors.length > 1) {
+	    		saveResult.result.errors = saveResult.result.errors[0];
+	    	}
+	    
+	        d3vUtil.alert("saved failed", { scheme : 'negative'});
+	        d3vCode.displayGenericErrors(saveResult.result.errors.message, saveResult, 'Lightning Save Error');
+	    }
+	    
+	    saving = false;
+	},
+
+	/**
 	 * @description Creates the visualforce record and upserts it.
 	 * @param       pageName       - name of vf file, no extension
 	 * @param       vfType         - type "Page" or "Component"
@@ -3279,6 +3325,33 @@ var d3vCode = {
 			callback(true, false);
 		}
 	},
+
+	validateLwcSave : function(lightningComponentResourceId, callback) {
+		if(lightningComponentResourceId && lightningComponentResourceId.length) {
+			ServerAction.query("SELECT Id, LastModifiedById, LastModifiedDate " +
+				"FROM LightningComponentResource WHERE Id = '" + lightningComponentResourceId + "'", function(callbackData) {
+				
+	        	var result = eval('(' + callbackData + ')');
+	        	var isNew = false;
+	        	var keyValidated = false;
+	        	
+	        	if(result && $.isArray(result) && result.length === 1) {
+	        		result = result[0];
+	        		
+	        		isNew = false;
+	        		keyValidated = lastSaveKey && 
+	        		               lastSaveKey.length && 
+	        		               lastSaveKey === result.Id + '-' + result.LastModifiedById + '-' + result.LastModifiedDate;
+	        	} else {
+	        		isNew = true;
+	        	}
+	        	
+	        	callback(isNew, keyValidated);
+			});
+		} else {
+			callback(true, false);
+		}
+	},
 	
 	/**
 	 * @description Initializes anything related to lightning
@@ -3380,6 +3453,73 @@ var d3vCode = {
 	        			
 				ServerAction.updateLightning(editorContents, id, function(callbackData) {
 					d3vCode.finishLightningSave(editorContents, auraType, isNew, callbackData);
+				});
+			} else if(!isNew && !keyValidated) {
+				d3vCode.handleGenericSaveFailure();
+			}
+		});
+	},	
+
+	/**
+	 * @description Creates a new lwc resource and bundle if needed
+	 **/
+	createLwc : function() {
+		var bundleName = $('#lwc-bundle-name').val();
+		var silent = $('#save-lwc-bundle').attr('is-silent') === 'true';
+		
+		if(bundleName && bundleName.length) {
+			if(d3vCode.validateFilename(bundleName) !== null) {
+				if(!silent) {
+					d3vUtil.alert('must enter a valid filename', { scheme : 'negative'});
+				}
+				
+				return;
+			}
+			
+			var defType = lastAction.replace('New Lightning ', '').toUpperCase();
+			
+			var sourceFormat = d3vCode.getAuraFormat(defType);
+			var editorContents = editor.getSession().getValue();
+			
+	    	if(!silent) {
+	        	d3vUtil.alert('saving ' + lastAction.toLowerCase().replace('new ', '') + '...', {showTime:ALERT_DISPLAY_TIME_LONG});
+	        }			
+			
+			d3vPopups.closePopups();
+			
+			ServerAction.createLwc(editorContents, 
+			                             defType, 
+			                             bundleName, 
+			                             sourceFormat,
+			                             function(callbackData) {
+			                             
+				d3vCode.finishLwcSave(editorContents, defType, true, callbackData);
+			});		
+		} else if(!silent) {
+			d3vUtil.alert('save failed, name is required', { scheme : 'negative'});
+		}
+	},
+	
+	/**
+	 * @description Saves lwc to server.
+	 * @param       editorContents - contents to save as lwc resource
+	 * @param       silent - do not show alerts during save
+	 * @param       id - id of aura definition
+	 **/
+	saveLwc : function(editorContents, id, silent) {
+		d3vCode.validateLwcSave(id, function(isNew, keyValidated) {
+			if(isNew) {
+				d3vPopups.showAnimatedModal('#lwc-bundler');	
+				$('#save-lwc-bundle').attr('is-silent', '' + silent);			
+			} else if(!isNew && keyValidated) {
+				var auraType = d3vCode.getAuraType(d3vCode.getCurrentExtension()).type.toLowerCase();
+				
+		    	if(!silent) {
+		        	d3vUtil.alert('saving lwc ' + auraType + '…', {showTime:ALERT_DISPLAY_TIME_LONG});
+		        }
+	        			
+				ServerAction.updateLwc(editorContents, id, function(callbackData) {
+					d3vCode.finishLwcSave(editorContents, auraType, isNew, callbackData);
 				});
 			} else if(!isNew && !keyValidated) {
 				d3vCode.handleGenericSaveFailure();

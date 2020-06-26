@@ -1802,6 +1802,27 @@ Setup the code editor to work in a way which suits you best.  Configure various 
 		  	</div>
 	    </div>
 
+	    <!-- Lwc bundler popup -->
+	    <div id="lwc-bundler" class="animated-modal hidden save-reseter">
+		  	<div id="lb-header" class="d3v-popup-header">
+		      	<div class="button keep-right d3v-popup-close hidden">X</div>
+		      	<div id="lb-title" class="d3v-popup-title">New Lwc Resource</div>
+		  	</div>
+		  	<div id="lb-body" class="rf-popup">
+				<div class="info-text">
+					Enter the new lwc resource name, or enter the name of an existing lwc resource
+					to bundle the files together.
+				</div>
+
+				<div class="small-margin-bottom full-width full-height keep-left">
+					<input type="text" id="lwc-bundle-name" placeholder="Enter a name here..." class="popup-input" />
+				</div>
+
+		      	<div class="button keep-left gen-btn" id="save-lwc-bundle">Save</div>
+		      	<div class="button keep-left gen-btn" id="cancel-lwc-bundle">Cancel</div>
+		  	</div>
+	    </div>
+
 	    <!-- Zip Expander Dialog -->
 	    <div id="zip-handler" class="animated-modal hidden">
 		  	<div id="zh-header" class="d3v-popup-header">

@@ -401,6 +401,28 @@ post '/createLightning' do
 	return result.to_json
 end
 
+# endpoint for updating a lwc resource
+post '/updateLwc' do
+	ctrl = D3VController.new(request.cookies['d3vsid'], request.cookies['d3vpep'], 
+							 request.cookies['d3vmep'], request.cookies['d3vaep'], request.cookies['d3vuid'])
+
+	request.body.rewind
+	source = Base64.decode64(request.body.read)	
+	result = ctrl.updateLwc(source, params[:id])
+	return result.to_json
+end
+
+# endpoint for creating a lwc resource
+post '/createLwc' do
+	ctrl = D3VController.new(request.cookies['d3vsid'], request.cookies['d3vpep'], 
+							 request.cookies['d3vmep'], request.cookies['d3vaep'], request.cookies['d3vuid'])
+
+	request.body.rewind
+	source = Base64.decode64(request.body.read)	
+	result = ctrl.createLwc(source, params[:n], params[:dt], params[:f])
+	return result.to_json
+end
+
 # endpoint for executing sosl
 post '/fileSearch' do
 	ctrl = D3VController.new(request.cookies['d3vsid'], request.cookies['d3vpep'], 

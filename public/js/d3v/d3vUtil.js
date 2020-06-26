@@ -2447,7 +2447,17 @@ var d3vUtil = {
 		            d3vCode.createLightning();	        	
 	        	}
 	        }
-	    });		        
+	    });	
+
+	    //Bind enter to lighting save new input
+	    $('input#lwc-bundle-name').keydown(function(event) {
+	        if(event.keyCode === 13) {
+	        	if(!key.ctrl && !$('.ui-autocomplete').is(':visible')) {
+		            event.preventDefault();
+		            d3vCode.createLwc();	        	
+	        	}
+	        }
+	    });	        
 	    
 	    $('.ocs-input').keydown(function(event) {
 	        if(event.keyCode === 13) {

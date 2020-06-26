@@ -1126,6 +1126,146 @@ class D3VController
 		return allowable.include? mime
 	end
 	
+	def createLwc(source, name, filePath, sourceFormat)
+		if @successfulLogin
+			begin
+				resourceName = nil
+				resourcePrefix = nil
+				
+				if name.index('.') == nil
+					bundle = query("SELECT Id FROM LightningComponentBundle WHERE DeveloperName = '" + name + "'")
+					resourceName = name
+				else
+					nameSplit = name.split('.')
+					resourceName = nameSplit[1]
+					resourcePrefix = nameSplit[0]
+					
+					bundle = query("SELECT Id FROM LightningComponentBundle WHERE DeveloperName = '" + resourceName + 
+						"' AND NamespacePrefix = '" + resourcePrefix + "'")
+				end
+				
+				parentId = nil
+				if bundle != nil && bundle.length && bundle.length > 0
+					parentId = bundle[0][:Id]
+				else
+					bundleResult = @sfPartner.create :sObject => [
+														   	:type, 'LightningComponentBundle',
+														   	:ApiVersion, @defaultVersion,
+														   	:DeveloperName, resourceName,
+														   	:MasterLabel, resourceName,
+														   	:NamespacePrefix, resourcePrefix,
+														   	:Description, resourceName
+														   ]
+							
+					puts bundleResult													   
+					if bundleResult.createResponse.result.success 
+						parentId = bundleResult.createResponse.result[:id]
+					end
+				end
+				
+				result = @sfPartner.create :sObject => [
+													   	:type, 'LightningComponentResource',
+													   	:Source, source,
+													   	:LightningComponentBundleId, parentId,
+													   	:FilePath, filePath,
+													   	:Format, sourceFormat
+													   ]				
+
+				tempLightning = Array.new
+				if result.createResponse.result.success								   
+					tempLightning = query("SELECT Id, LastModifiedById, LastModifiedDate, LightningComponentBundleId, " +
+						"LightningComponentBundle.ApiVersion, LightningComponentBundle.DeveloperName, " +
+						"LightningComponentBundle.NamespacePrefix FROM LightningComponentResource WHERE Id = '" + 
+						result.createResponse.result[:id] + "'")
+	
+					if tempLightning.length && tempLightning.length > 0
+						tempLightning = tempLightning[0]
+					end	
+				end
+				
+				lightningSaveResult = Array.new
+				lightningSaveResult[0] = result
+				lightningSaveResult[1] = tempLightning
+				return lightningSaveResult
+			rescue Exception => exception
+				if exception.message.index("UNABLE_TO_LOCK_ROW") != nil
+					return '{ "bodyCrc" : "",' +
+							  '"column" : "",' +
+							      '"Id" : "",' +
+							    '"line" : "",' +
+							    '"Name" : "' + filename + '",' +
+							 '"problem" : "' + exception.message + '",' +
+							 '"success" : "false",' +				 
+							'"warnings" : ""}'				
+				elsif exception.message.index("UNKNOWN_EXCEPTION") != nil
+					return '{ "bodyCrc" : "",' +
+							  '"column" : "",' +
+							      '"Id" : "",' +
+							    '"line" : "",' +
+							    '"Name" : "' + filename + '",' +
+							 '"problem" : "' + exception.message + '",' +
+							 '"success" : "false",' +				 
+							'"warnings" : ""}'					
+				else			
+					logException('createLwc(' + parentId + ', ' + name + ')', exception.message, exception.backtrace)
+					raise
+				end
+			end
+		end	
+	end
+	
+	# updates a lwc resource
+	# content - file contents
+	# id      - LightningComponentResource Id
+	def updateLwc(content, id)
+		if @successfulLogin
+			begin
+				result = @sfPartner.update :sObject => [
+													   	:type, 'LightningComponentResource',
+													   	:Source, content,
+													   	:Id, id
+													   ]
+													   
+				tempLightning = Array.new
+				if result.updateResponse.result.success								   
+					tempLightning = query("SELECT Id, LastModifiedById, LastModifiedDate FROM LightningComponentResource WHERE Id = '" + id + "'")
+	
+					if tempLightning.length && tempLightning.length > 0
+						tempLightning = tempLightning[0]
+					end	
+				end
+				
+				lightningSaveResult = Array.new
+				lightningSaveResult[0] = result
+				lightningSaveResult[1] = tempLightning
+				return lightningSaveResult
+			rescue Exception => exception
+				if exception.message.index("UNABLE_TO_LOCK_ROW") != nil
+					return '{ "bodyCrc" : "",' +
+							  '"column" : "",' +
+							      '"Id" : "",' +
+							    '"line" : "",' +
+							    '"Name" : "' + filename + '",' +
+							 '"problem" : "' + exception.message + '",' +
+							 '"success" : "false",' +				 
+							'"warnings" : ""}'				
+				elsif exception.message.index("UNKNOWN_EXCEPTION") != nil
+					return '{ "bodyCrc" : "",' +
+							  '"column" : "",' +
+							      '"Id" : "",' +
+							    '"line" : "",' +
+							    '"Name" : "' + filename + '",' +
+							 '"problem" : "' + exception.message + '",' +
+							 '"success" : "false",' +				 
+							'"warnings" : ""}'					
+				else			
+					logException('updateLwc()', exception.message, exception.backtrace)
+					raise
+				end
+			end										   
+		end	
+	end
+
 	def createLightning(source, name, defType, sourceFormat)
 		if @successfulLogin
 			begin
@@ -1863,13 +2003,16 @@ class D3VController
         codeFiles    = []		        
         queryWhere   = ''
         qwLightning  = ''
+        qwLwc  = ''
        
         if filterLevel == 'pkgd'	
         	queryWhere  = 'WHERE NamespacePrefix != null'
         	qwLightning = 'WHERE AuraDefinitionBundle.NamespacePrefix != null'
+        	qwLwc = 'WHERE LightningComponentBundle.NamespacePrefix != null'
         elsif filterLevel == 'upkg'
         	queryWhere  = 'WHERE NamespacePrefix = null'
         	qwLightning = 'WHERE AuraDefinitionBundle.NamespacePrefix = null'
+        	qwLwc = 'WHERE LightningComponentBundle.NamespacePrefix = null'
         elsif filterLevel != 'none' && filterLevel != 'both'
         	filterLevel = JSON.parse(filterLevel)
         end
@@ -1882,7 +2025,7 @@ class D3VController
         	srFiles        = queryAll("SELECT Name, NamespacePrefix FROM StaticResource " + queryWhere + " ORDER BY NamespacePrefix, Name", nil, Array.new)
         	customObjects  = queryTooling("SELECT DeveloperName, NamespacePrefix FROM CustomObject " + queryWhere + " ORDER BY NamespacePrefix, DeveloperName")
         	lightningFiles = queryTooling("SELECT Id, AuraDefinitionBundleId, AuraDefinitionBundle.NamespacePrefix, AuraDefinitionBundle.DeveloperName, DefType FROM AuraDefinition " + qwLightning + " ORDER BY AuraDefinitionBundle.DeveloperName, DefType")
-        	
+        	lwcFiles = queryTooling("SELECT Id, LightningComponentBundleId, LightningComponentBundle.NamespacePrefix, LightningComponentBundle.DeveloperName, FilePath, Format, Source FROM LightningComponentResource " + qwLwc + " ORDER BY LightningComponentBundle.DeveloperName, FilePath") 
         	if pageFiles != nil && pageFiles.kind_of?(Array)
         		codeFiles += pageFiles
         	end
@@ -1909,6 +2052,10 @@ class D3VController
         	
         	if lightningFiles != nil && lightningFiles.kind_of?(Array)
         		codeFiles += lightningFiles
+        	end
+
+        	if lwcFiles != nil && lwcFiles.kind_of?(Array)
+        		codeFiles += lwcFiles
         	end
 		elsif filterLevel != 'none'
         	if filterLevel['classInclude']
@@ -1959,14 +2106,22 @@ class D3VController
 				end
 			end		
 			
+		end
         	if filterLevel['lightningInclude']
 				queryResult = queryTooling("SELECT Id, AuraDefinitionBundleId, AuraDefinitionBundle.NamespacePrefix, AuraDefinitionBundle.DeveloperName, DefType FROM AuraDefinition " + filterLevel['lightningWhere'])
 					
 				if queryResult.kind_of?(Array)
 					codeFiles += queryResult
 				end
-			end																					
-		end
+			end	
+
+			if filterLevel['lwcInclude']
+				queryResult = queryTooling("SELECT Id, LightningComponentBundleId, LightningComponentBundle.NamespacePrefix, LightningComponentBundle.DeveloperName, FilePath, Format, Source FROM LightningComponentResource " + filterLevel['lwcWhere'])
+					
+				if queryResult.kind_of?(Array)
+					codeFiles += queryResult
+				end
+			end																				
 		
 		codeFiles.each {
 			|file|
@@ -1978,6 +2133,8 @@ class D3VController
 				namespace = file["NamespacePrefix"] + '.'
 			elsif file["AuraDefinitionBundleId"] && file["AuraDefinitionBundle"]["NamespacePrefix"]
 				namespace = file["AuraDefinitionBundle"]["NamespacePrefix"] + '.'
+			elsif file["LightningComponentBundleId"] && file["LightningComponentBundle"]["NamespacePrefix"]
+				namespace = file["LightningComponentBundle"]["NamespacePrefix"] + '.'
 			end
 			
 			if file[:type] == APEX_CLASS
@@ -1992,6 +2149,8 @@ class D3VController
 				codeNames << OPEN_FILE + namespace + file.Name + STATIC_RESOURCE_SUFFIX
 			elsif file["AuraDefinitionBundleId"]
 				codeNames << OPEN_FILE + namespace + file["AuraDefinitionBundle"]["DeveloperName"] + ".aura-" + file["DefType"].downcase
+			elsif file["LightningComponentBundleId"]
+				codeNames << OPEN_FILE + namespace + file["LightningComponentBundle"]["DeveloperName"] + ".lwc-" + file["Format"].downcase
 			elsif file["DeveloperName"] 
 				codeNames << OPEN_FILE + namespace + file["DeveloperName"] + CUSTOM_OBJECT_SUFFIX
 			end
