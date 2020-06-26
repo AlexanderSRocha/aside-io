@@ -2167,8 +2167,6 @@ class D3VController
 	# returns unescaped and base 64 encoded file
 	def fileQuery(fQuery, type, isTooling, retryAllowed)
 		begin
-			logger = Logger.new(STDOUT)
-			logger.level = Logger::WARN
 			if isTooling != "true"
 				qr = query(fQuery)
 			else
@@ -2184,14 +2182,11 @@ class D3VController
 			end
 
 			puts "First Logs!!!"
-			logger.debug("QUERY RESULT \n")
-			logger.debug(qr)
-			logger.debug("\n")
-			logger.debug(qr["attributes"])
-			logger.debug("\n")
-			logger.debug(qr["Source"])
-			logger.debug("\n")
-			logger.debug(qr["attributes"]["Source"])
+			puts "QUERY RESULT"
+			puts qr
+			puts qr["attributes"]
+			puts qr["Source"]
+			puts qr["attributes"]["Source"]
 			
 			
 			codeBody   = ''
@@ -2221,8 +2216,14 @@ class D3VController
 					qr[:Markup] = Base64.encode64(qr.Markup).gsub(/\n/, '')
 				elsif type == 'Body' && qr.Body != nil
 					qr[:Body] = Base64.encode64(qr.Body).gsub(/\n/, '')
-				elsif type == 'Source' && qr.Source != nil
-					qr[:Source] = Base64.encode64(qr.Source).gsub(/\n/, '')
+				elsif type == 'Source' && (isTooling != "true" && qr.Source != nil) && (isTooling == "true" && qr["Source"] != nil)
+					sourceValue = "";
+					if isTooling != "true"
+						sourceValue = qr.Source
+					else
+						sourceValue = qr["Source"]
+					end
+					qr[:Source] = Base64.encode64(isTooling).gsub(/\n/, '')
 				end
 			end
 			
