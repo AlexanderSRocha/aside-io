@@ -2169,14 +2169,10 @@ class D3VController
 		begin
 			logger = Logger.new(STDOUT)
 			logger.level = Logger::WARN
-			logger.debug("Tooling TYPE")
-			logger.debug(isTooling)
 			if isTooling != "true"
 				qr = query(fQuery)
-				logger.debug("Tooling False")
 			else
 				qr = queryTooling(fQuery)
-				logger.debug("Tooling True")
 			end
 			
 			if qr == nil
@@ -2187,8 +2183,15 @@ class D3VController
 				return 'FNFE'
 			end
 
-			logger.debug("QUERY RESULT")
+			puts "First Logs!!!"
+			logger.debug("QUERY RESULT \n")
 			logger.debug(qr)
+			logger.debug("\n")
+			logger.debug(qr.attributes)
+			logger.debug("\n")
+			logger.debug(qr.attributes.Source)
+			logger.debug("\n")
+			logger.debug(qr.Source)
 			
 			codeBody   = ''
 			returnBody = ''
