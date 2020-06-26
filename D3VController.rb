@@ -2150,7 +2150,7 @@ class D3VController
 			elsif file["AuraDefinitionBundleId"]
 				codeNames << OPEN_FILE + namespace + file["AuraDefinitionBundle"]["DeveloperName"] + ".aura-" + file["DefType"].downcase
 			elsif file["LightningComponentBundleId"]
-				codeNames << OPEN_FILE + namespace + file["LightningComponentBundle"]["DeveloperName"] + ".lwc-" + file["Format"].downcase
+				codeNames << OPEN_FILE + namespace + file["LightningComponentBundle"]["DeveloperName"] + ".lwc-" + file["FilePath"].downcase
 			elsif file["DeveloperName"] 
 				codeNames << OPEN_FILE + namespace + file["DeveloperName"] + CUSTOM_OBJECT_SUFFIX
 			end
