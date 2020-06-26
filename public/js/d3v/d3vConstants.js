@@ -185,6 +185,7 @@ var HISTORY_SAVE_BUFFER      = 3000;
 var NUM_ZIP_MENU_ITEMS       = 10;
 var ZIP_BASE_DISPLAY_NAME    = 'open resource';
 var LIGHTNING_EXT            = 'aura';
+var LWC_EXT            		 = 'lwc';
 var GP_MAX_SIZE              = 0.80;
 var GP_DEFAULT_PREF_SIZE     = 200;
 var GP_MIN_SIZE              = 185;

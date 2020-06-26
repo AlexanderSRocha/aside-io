@@ -5351,6 +5351,20 @@ var d3vCode = {
 			type : extSplit[1]
 		};
 	},
+
+	/**
+	 * @description Gets the aura type given an aura extension
+	 * @param       ext  - the complete aura extension (e.g. "aura (svg)")
+	 * @return      object with new ext and aura type
+	 **/
+	getLwcFilePath : function(ext) {
+		var extSplit = ext.split('-');
+		
+		return {
+			extension : extSplit[0],
+			type : extSplit[1]
+		};
+	},
 	
 	/**
 	 * @description Get the starting AuraDefinition code for a given definition type
@@ -5478,6 +5492,7 @@ var d3vCode = {
 	    var fnSplit  = filename.split(".");
 	    var ext;
 	    var auraInfo;
+	    var lwcInfo;
 	    
 	    if(fnSplit.length === 3) {
 	    	ext = fnSplit[2];
@@ -5492,6 +5507,11 @@ var d3vCode = {
 	    if(ext.indexOf('aura') !== -1) {
 	    	auraInfo = d3vCode.getAuraType(ext);
 	    	ext = auraInfo.extension;
+	    }
+
+	    if(ext.indexOf('lwc') !== -1) {
+	    	lwcInfo = d3vCode.getLwcFilePath(ext);
+	    	ext = lwcInfo.extension;
 	    }
 	    
 	    if(ext === 'object') {
@@ -5535,6 +5555,11 @@ var d3vCode = {
 	    } else if(ext == "aura") {
 	    	select   = 'Source';
 			fromType = auraInfo.type;
+	        d3vCode.setAuraHighlight(fromType);
+	        d3vCode.setLightningFooter(fromType, false);
+	    } else if(ext == "lwc") {
+	    	select   = 'Source';
+			fromType = lwcInfo.type;
 	        d3vCode.setAuraHighlight(fromType);
 	        d3vCode.setLightningFooter(fromType, false);
 	    } else {
@@ -5645,6 +5670,9 @@ var d3vCode = {
 			d3vCode.loadUITheme(cfn, localVersion, searchInfo);
 		} else if(ext === 'aura') {
 			var cfn = currentFile.substring(5, currentFile.indexOf('.aura'));
+			d3vCode.loadFile(bodyField, fromType, ext, localVersion, searchInfo);
+		} else if(ext === 'lwc') {
+			var cfn = currentFile.substring(5, currentFile.indexOf('.lwc'));
 			d3vCode.loadFile(bodyField, fromType, ext, localVersion, searchInfo);
 		} else {
 			d3vCode.loadFile(bodyField, fromType, ext, localVersion, searchInfo);
@@ -5861,6 +5889,17 @@ var d3vCode = {
 			            "LastModifiedBy.Name, LastModifiedDate, LastModifiedById, Id, AuraDefinitionBundle.ApiVersion " +
 			            "FROM AuraDefinition WHERE AuraDefinitionBundle.DeveloperName = '" + filename + 
 			            "' AND DefType = '" + fromType + "'" + namespaceClause;				
+		} else if(ext === LWC_EXT) {
+			if(currentFileNamespace) {
+				namespaceClause = " AND LightningComponentBundle.NamespacePrefix = '" + currentFileNamespace + "'";
+			} else {
+				namespaceClause = " AND LightningComponentBundle.NamespacePrefix = null";
+			}
+			
+			fileQuery = "SELECT Source, LightningComponentBundleId, LightningComponentBundle.DeveloperName, " +
+			            "LastModifiedBy.Name, LastModifiedDate, LastModifiedById, Id, LightningComponentBundle.ApiVersion " +
+			            "FROM LightningComponentResource WHERE LightningComponentBundle.DeveloperName = '" + filename + 
+			            "' AND FilePath = '" + fromType + "'" + namespaceClause;				
 		} else {
 			if(currentFileNamespace) {
 				namespaceClause = " AND NamespacePrefix = '" + currentFileNamespace + "'";
