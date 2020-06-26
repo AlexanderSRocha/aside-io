@@ -2166,14 +2166,14 @@ class D3VController
 	# returns unescaped and base 64 encoded file
 	def fileQuery(fQuery, type, isTooling, retryAllowed)
 		begin
-			puts "Tooling TYPE"
-			puts isTooling
+			print "Tooling TYPE"
+			print isTooling
 			if isTooling != "true"
 				qr = query(fQuery)
-				puts "Tooling False"
+				print "Tooling False"
 			else
 				qr = queryTooling(fQuery)
-				puts "Tooling True"
+				print "Tooling True"
 			end
 			
 			if qr == nil
@@ -2183,6 +2183,9 @@ class D3VController
 			elsif qr.length == 0
 				return 'FNFE'
 			end
+
+			print "QUERY RESULT"
+			print qr
 			
 			codeBody   = ''
 			returnBody = ''
