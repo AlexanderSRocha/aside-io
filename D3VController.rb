@@ -2174,6 +2174,7 @@ class D3VController
 			else
 				qr = queryTooling(fQuery)
 				puts "Tooling True"
+			end
 			
 			if qr == nil
 				return 'relogin'
