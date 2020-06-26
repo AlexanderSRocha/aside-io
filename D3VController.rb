@@ -2187,11 +2187,12 @@ class D3VController
 			logger.debug("QUERY RESULT \n")
 			logger.debug(qr)
 			logger.debug("\n")
-			logger.debug(qr.attributes)
+			logger.debug(qr["attributes"])
 			logger.debug("\n")
-			logger.debug(qr.attributes.Source)
+			logger.debug(qr["Source"])
 			logger.debug("\n")
-			logger.debug(qr.Source)
+			logger.debug(qr["attributes"]["Source"])
+			
 			
 			codeBody   = ''
 			returnBody = ''
