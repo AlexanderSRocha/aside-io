@@ -5357,13 +5357,13 @@ var d3vCode = {
 	 * @param       ext  - the complete aura extension (e.g. "aura (svg)")
 	 * @return      object with new ext and aura type
 	 **/
-	getLwcFilePath : function(ext) {
+	getLwcFilePath : function(bundleName, ext) {
 		var extSplit = ext.split('-');
 		
 		return {
 			extension : extSplit[0],
 			type : extSplit[1],
-			filePath : "lwc/"+extSplit[0]+"/"+extSplit[0]+"."+((extSplit[1] === "xml") ? "js-meta." : "")+extSplit[1]
+			filePath : "lwc/"+bundleName+"/"+bundleName+"."+((bundleName === "xml") ? "js-meta." : "")+extSplit[1]
 		};
 	},
 	
@@ -5511,7 +5511,7 @@ var d3vCode = {
 	    }
 
 	    if(ext.indexOf('lwc') !== -1) {
-	    	lwcInfo = d3vCode.getLwcFilePath(ext);
+	    	lwcInfo = d3vCode.getLwcFilePath(currentFile.split('.')[0], ext);
 	    	ext = lwcInfo.extension;
 	    }
 	    
