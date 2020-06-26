@@ -13,6 +13,7 @@ require './defaultDriver.rb'
 require './client_auth_header_handler.rb'
 require 'json'
 require 'pg'
+require 'logger'
 
 class D3VController
 	
@@ -2166,14 +2167,16 @@ class D3VController
 	# returns unescaped and base 64 encoded file
 	def fileQuery(fQuery, type, isTooling, retryAllowed)
 		begin
-			print "Tooling TYPE"
-			print isTooling
+			logger = Logger.new(STDOUT)
+			logger.level = Logger::WARN
+			logger.debug("Tooling TYPE")
+			logger.debug(isTooling)
 			if isTooling != "true"
 				qr = query(fQuery)
-				print "Tooling False"
+				logger.debug("Tooling False")
 			else
 				qr = queryTooling(fQuery)
-				print "Tooling True"
+				logger.debug("Tooling True")
 			end
 			
 			if qr == nil
@@ -2184,8 +2187,8 @@ class D3VController
 				return 'FNFE'
 			end
 
-			print "QUERY RESULT"
-			print qr
+			logger.debug("QUERY RESULT")
+			logger.debug(qr)
 			
 			codeBody   = ''
 			returnBody = ''
